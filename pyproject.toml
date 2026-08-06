@@ -1,0 +1,12 @@
+[project]
+name = "maf"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "onnxruntime<1.21",
+    "cryptography<49",
+    "agent-framework>=1.13.0",
+    "python-dotenv>=1.2.2",
+]
