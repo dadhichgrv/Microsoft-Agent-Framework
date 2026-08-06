@@ -1,2 +1,3 @@
 agent-framework
 python-dotenv
+fastmcp
