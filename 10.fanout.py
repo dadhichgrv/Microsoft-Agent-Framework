@@ -1,8 +1,8 @@
 import os, sys
-import asyncio
+import asyncio, time
 from typing import Any, cast
-from agent_framework import Agent, AgentResponse, AgentResponseUpdate, ContextProvider, AgentSession,  SessionContext
-from agent_framework.orchestrations import SequentialBuilder
+from agent_framework import Agent, AgentResponse, ContextProvider, AgentSession,  SessionContext
+from agent_framework.orchestrations import SequentialBuilder, ConcurrentBuilder
 from agent_framework.openai import OpenAIChatClient
 from dotenv import load_dotenv
 
@@ -47,40 +47,31 @@ business_context_provider = UserPreference(
 
 # Create AGent that takes product, revennnue and priority name and generate recommendations
 
-analyst_agent = Agent(
+product_agent = Agent(
                         client = OpenAIChatClient(),
-                        name   = "analyst_agent",
+                        name   = "product_agent",
                         instructions = """
-                                          You are a business data analyst. Provide short structural analysis of the account metrics provided in the data payload.  """,
+                                          Provide product of the account provided in the data payload.  """,
                         context_providers = [business_context_provider]
                         )
 
 
-summary_agent = Agent(
+revenue_agent = Agent(
                 client = OpenAIChatClient(),
-                instructions = """
-   ROLE: Executive Summarizer.
-    TASK: Write a brief, direct business summary of the raw metrics provided in the input text.
-    OUTPUT FORMAT: Start directly with the summary data. Write as a direct corporate statement for a client dashboard.
-    """  
-                ,
-                name = "summary_agent"
-     
+                name = "revenue_agent",
+                instructions = """ Provide estimated revenue of the account provided in the data payload. """  ,
+                context_providers = [business_context_provider]
                       ) 
 
-email_agent = Agent(
+account_agent = Agent(
                 client = OpenAIChatClient(),
-                instructions = " Draft a professional customer outreach email using only the provided summary."
-                ,
-                name = "email_agent"
-     
+                name = "account_agent",
+                instructions = " Provide count of accounts in data payload. Also provide sum of estimated revenue of all accounts. Do not provide anything else",
+                context_providers = [business_context_provider]
                       ) 
     
-workflow = SequentialBuilder(
-                            participants = [analyst_agent, summary_agent, email_agent] ,
-                            chain_only_agent_responses=True ,
-                            intermediate_output_from = [analyst_agent, summary_agent]
-                           
+workflow = ConcurrentBuilder(
+                            participants = [product_agent, revenue_agent, account_agent] 
                             ).build()
 
 async def main():
@@ -89,11 +80,10 @@ async def main():
      events = await workflow.run(query)
      outputs = events.get_outputs()
 
-     for agent_response in outputs:
-         agent_response : AgentResponse = agent_response
+     if outputs:
+         final : AgentResponse = outputs[0]
 
-
-         for msg in agent_response.messages:
+         for msg in final.messages:
              name = msg.author_name or "assistant"
              print(f"[{name}]")
              print(msg.text)
