@@ -1,0 +1,49 @@
+{
+  "workflow_name": "WorkflowBuilder-9a817856-07dc-499d-b4fa-f94960ca6b82",
+  "graph_signature_hash": "8e931862e9c56488bc22cc809e1d8b7b2b2bb642f967307663d80a4a1e52eaa0",
+  "checkpoint_id": "aa8fc31f-b3bd-473f-8a47-47a367ee345c",
+  "previous_checkpoint_id": null,
+  "timestamp": "2026-08-09T13:20:38.901959+00:00",
+  "messages": {
+    "internal:input-conversation": [
+      {
+        "__pickled__": "gAWVIQEAAAAAAACMKmFnZW50X2ZyYW1ld29yay5fd29ya2Zsb3dzLl9ydW5uZXJfY29udGV4dJSMD1dvcmtmbG93TWVzc2FnZZSTlCmBlH2UKIwEZGF0YZSMFiBBSSBpbiBJbnRlcmlvciBEZXNpZ26UjAlzb3VyY2VfaWSUjBtpbnRlcm5hbDppbnB1dC1jb252ZXJzYXRpb26UjAl0YXJnZXRfaWSUjBJpbnB1dC1jb252ZXJzYXRpb26UjAR0eXBllGgAjAtNZXNzYWdlVHlwZZSTlIwIc3RhbmRhcmSUhZRSlIwOdHJhY2VfY29udGV4dHOUTowPc291cmNlX3NwYW5faWRzlE6MG29yaWdpbmFsX3JlcXVlc3RfaW5mb19ldmVudJROdWIu",
+        "__type__": "agent_framework._workflows._runner_context:WorkflowMessage"
+      }
+    ]
+  },
+  "state": {
+    "_workflow_run_kwargs": {},
+    "_executor_state": {
+      "input-conversation": {},
+      "reserach_agent": {
+        "cache": [],
+        "full_conversation": [],
+        "agent_session": {
+          "type": "session",
+          "session_id": "4c797360-ac50-4dd1-90bc-4d732a363126",
+          "service_session_id": null,
+          "state": {}
+        },
+        "pending_agent_requests": {},
+        "pending_responses_to_agent": []
+      },
+      "writer_agent": {
+        "cache": [],
+        "full_conversation": [],
+        "agent_session": {
+          "type": "session",
+          "session_id": "e0649831-2511-41eb-a803-27b698a14590",
+          "service_session_id": null,
+          "state": {}
+        },
+        "pending_agent_requests": {},
+        "pending_responses_to_agent": []
+      }
+    }
+  },
+  "pending_request_info_events": {},
+  "iteration_count": 0,
+  "metadata": {},
+  "version": "1.0"
+}
