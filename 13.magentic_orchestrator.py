@@ -2,8 +2,8 @@ import os, sys
 import asyncio, time
 from typing import Any, cast
 from pydantic import BaseModel
-from agent_framework import Agent, ContextProvider, AgentSession,  SessionContext
-from agent_framework.orchestrations import SequentialBuilder, ConcurrentBuilder
+from agent_framework import Agent, ContextProvider, AgentSession,  SessionContext, AgentResponse
+from agent_framework.orchestrations import MagenticBuilder
 from agent_framework.openai import OpenAIChatClient
 from dotenv import load_dotenv
 
@@ -75,7 +75,7 @@ critic_agent = Agent(
                                     and give a score and feedback if any in below format :
                                     Score    : int
                                     Feedback : Suggestions if any
-                                    If score is more than 8, your response is to approve it else reject it
+                                    If score is more than 8, your feedback is to approve it else reject it
                                       """ 
             
                                   
@@ -86,54 +86,74 @@ critic_agent = Agent(
 
 
 
-# Run this for 3 iterations to generate draft reason to believe and revise it 
-async def critic_loop(query : str, max_iterations : int = 3):
-    # Create session to remember loop data in that session
-    session = recommendation_agent.create_session()
+opportunity_agent = Agent(
+                        client = OpenAIChatClient(),
+                        name   = "oppty_agent",
+                        instructions = """ You are opportunity creation assistant who helps user create opportunity from a lead.
+                                            Return "Opportunity Created Successfully".
+                                       """,
+                        context_providers = [business_context_provider]
+                        )
 
-    draft = (
-        await recommendation_agent.run(query, session = session)
-            ).text
-    
-    for i in range(max_iterations):
-        print(f"Iteration {i+1}")
 
-        # Adding Structured Output constrain here
-        result = (await critic_agent.run(draft,  options = {
-                                                             "response_format" : FeedBack_Output
-                                                           },
-                                     )).text
+decline_agent = Agent(
+                client = OpenAIChatClient(),
+                name = "decline_agent",
+                instructions = """ You are lead decline assistant who helps user decline a lead.
+                                    Return "Lead Declined Successfully".
+                                      """  ,
+                context_providers = [business_context_provider]
+                      ) 
 
-        score    = FeedBack_Output.model_validate_json(result).score
-        feedback = FeedBack_Output.model_validate_json(result).feedback
+share_partner_agent = Agent(
+                client = OpenAIChatClient(),
+                name = "share_partner_agent",
+                instructions = """ You are partner sharing assistant who shares the lead with partner.
+                                   Return "Lead Shared with partner successfuly". 
+                                """,
+                context_providers = [business_context_provider]
+                      ) 
 
-        print(f"Draft : {draft}")
-        print(f"Score : {score}")
-        print(f"Feedback : {feedback}")
+general_agent = Agent(
+                client = OpenAIChatClient(),
+                name = "general_agent",
+                instructions = " You are general assistant who helps users with account information. Provide account details if asked",
+                context_providers = [business_context_provider]
+                      ) 
 
-        if int(score) >= 8:
-            print(f"Approved on iteration : {i+1}")
-            return draft
-        
-        draft = (await recommendation_agent.run(f"Revise your previous draft based on this feedback : {feedback}",
-                                               session = session 
-                                               )
-                ).text
-        
-    print("Max iteration reached. Returning last version")
-    return draft    
+
+orchestration_agent = Agent(
+                            client       = OpenAIChatClient(),
+                            name         = "Orchestrator",
+                            instructions = """ You are magentic orchestrator. Plan which agent to invoke and in what order in 
+                                                order to complete the task. Re-plan dynamically depending on result.
+                                                Respond this in 60 seconds.
+                                            """ 
+                            )
+
+workflow = MagenticBuilder(
+            participants = [opportunity_agent, decline_agent],
+            manager_agent = orchestration_agent,
+            max_round_count = 10,
+            max_stall_count = 3,
+            max_reset_count = 2
+                            ).build()
 
 
 async def main():
      
      query = " Provide reason to recommend for Fourth Coffee Account"
+     query2 = "Take this Contose and decline it "
                
-     final_response = await critic_loop(query)
-     print(f"Response : {final_response}")
-     print("-"*30)
+     events = await workflow.run(query2)
+     outputs = events.get_outputs()
 
+     if outputs:
+         final : AgentResponse = outputs[0]
 
-  
+         for msg in final.messages:
+             print(msg.text)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
